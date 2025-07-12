@@ -8,14 +8,40 @@ namespace QuickExplainIt;
 
 public class Document
 {
+    public Func<string, IArtery> GetArtery = filename => new WriteDataToFile(filename).ClearFile();
+
     public void ToFile(string filename, Assembly assembly)
     {
-        var artery = new WriteDataToFile(filename).ClearFile();
+        var artery = GetArtery(filename);
         var attrs = GetDocAttributes(assembly).ToList();
         Signal.From(RenderMarkdown).SetArtery(artery).Pulse(attrs);
     }
 
-    public static Flow<DocAttribute> RenderMarkdown =
+    public void ToFiles(IEnumerable<DocFileInfo> files, Assembly assembly)
+    {
+        var allDocs = GetDocEntries(assembly).ToList();
+
+        foreach (var file in files)
+        {
+            var matchingDocs = allDocs
+                .Where(d =>
+                {
+                    var nsToCheck = (d.Member as Type)?.Namespace ?? d.Member.DeclaringType?.Namespace;
+                    return nsToCheck is not null &&
+                        file.Namespaces.Any(ns => nsToCheck.StartsWith(ns));
+                })
+                .Select(d => d.Attribute)
+                .ToList();
+
+            if (matchingDocs.Any())
+            {
+                var artery = GetArtery(file.Filename);
+                Signal.From(RenderMarkdown).SetArtery(artery).Pulse(matchingDocs);
+            }
+        }
+    }
+
+    private static readonly Flow<DocAttribute> RenderMarkdown =
         from doc in Pulse.Start<DocAttribute>()
         let headingLevel = doc.Order.Split('-').Length
         from rcaption in Pulse
@@ -34,26 +60,49 @@ public class Document
             .NoOp(/* ---------------- End of content  ---------------- */ )
         select doc;
 
+    private static IOrderedEnumerable<DocEntry> GetDocEntries(Assembly assembly)
+    {
+        var types = assembly.GetTypes();
+
+        var typeAttributes =
+            types
+                .SelectMany(t => t
+                    .GetCustomAttributes(typeof(DocAttribute), false)
+                    .Cast<DocAttribute>()
+                    .Select(attr => new DocEntry(attr, t)));
+
+        var methodAttributes =
+            types
+                .SelectMany(t => t.GetMethods())
+                .SelectMany(m => m
+                    .GetCustomAttributes(typeof(DocAttribute), false)
+                    .Cast<DocAttribute>()
+                    .Select(attr => new DocEntry(attr, m)));
+
+        return typeAttributes
+            .Concat(methodAttributes)
+            .OrderBy(e => ParseOrder(e.Attribute.Order), new LexicalFloatArrayComparer());
+    }
+
     private IOrderedEnumerable<DocAttribute> GetDocAttributes(Assembly assembly)
     {
         var typeattributes =
             assembly
                 .GetTypes()
-                .SelectMany(t => t.GetCustomAttributes(typeof(DocAttribute), false));
+                .SelectMany(t => t.GetCustomAttributes<DocAttribute>());
 
         var methodattributes =
             assembly
                 .GetTypes()
                 .SelectMany(t => t.GetMethods())
-                .SelectMany(t => t.GetCustomAttributes(typeof(DocAttribute), false));
+                .SelectMany(t => t.GetCustomAttributes<DocAttribute>());
         return
             typeattributes
                 .Union(methodattributes)
-                .Cast<DocAttribute>()
                 .OrderBy(attr => ParseOrder(attr.Order), new LexicalFloatArrayComparer());
     }
 
-    public class LexicalFloatArrayComparer : IComparer<float[]>
+    private class LexicalFloatArrayComparer : IComparer<float[]>
     {
         public int Compare(float[]? x, float[]? y)
         {
@@ -70,14 +119,15 @@ public class Document
         }
     }
 
-    public static float[] ParseOrder(string order)
+    private static float[] ParseOrder(string order)
     {
-        return order
+        return [.. order
             .Split('-')
             .Select(part =>
                 float.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out var f)
                     ? f
-                    : throw new FormatException($"Invalid order segment: '{part}'"))
-            .ToArray();
+                    : throw new FormatException($"Invalid order segment: '{part}'"))];
     }
+
+    private record DocEntry(DocAttribute Attribute, MemberInfo Member);
 }

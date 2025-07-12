@@ -1,5 +1,18 @@
-namespace QuickExplainIt.Tests;
+using QuickExplainIt.Text;
 
+namespace QuickExplainIt.Tests.Text;
+
+[Doc(Order = "0-2-1", Caption = "LinesReader: Sequential Line Navigation", Content =
+@"`LinesReader` is a small utility used in tests to consume string content line-by-line.
+```csharp
+var reader = LinesReader.FromText(vcardString);
+Assert.Equal(""BEGIN:VCARD"", reader.NextLine());
+reader.Skip();
+Assert.True(reader.EndOfContent());
+
+Use `FromText(...)` for newline-separated text or `FromStringList(...)` for an array of lines. 
+It throws exceptions when reading past the end or using it uninitialized.
+```")]
 public class LinesReaderTests
 {
     [Fact]

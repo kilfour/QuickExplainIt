@@ -1,8 +1,22 @@
 namespace QuickExplainIt.Tests;
 
+[Doc(Order = "0-1", Caption = "Attribute-Based Documentation", Content =
+@"Apply the `[Doc]` attribute to your test classes and methods:
+
+```csharp
+[Doc(Order = ""1"", Caption = ""The Calculator"", Content = ""This class calculates totals."")]
+public class CalculatorTests
+{
+    [Fact]
+    [Doc(Order = ""1-1"", Caption = ""Empty Cart"", Content = ""An empty cart always totals to 0."")]
+    public void EmptyCart_ReturnsZero() => ...
+}
+```")]
 public class DocAttributeTests
 {
     [Fact]
+    [Doc(Order = "0-1-1", Caption = "", Content =
+"The `Order` defines hierarchy (`1`, `1-1`, etc.), `Caption` becomes the header, and `Content` is the body text.")]
     public void Constructor_Sets_All_Properties()
     {
         var attr = new DocAttribute("1-1", "Caption", "Content");

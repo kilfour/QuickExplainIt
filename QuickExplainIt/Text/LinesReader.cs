@@ -1,4 +1,4 @@
-namespace QuickExplainIt;
+namespace QuickExplainIt.Text;
 
 public class LinesReader
 {
