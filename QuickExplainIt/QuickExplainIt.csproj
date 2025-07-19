@@ -17,7 +17,7 @@
     <None Include="..\README.md" Pack="true" PackagePath="" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="QuickPulse" Version="0.1.3" />
-    <!-- <ProjectReference Include="..\..\QuickPulse\QuickPulse\QuickPulse.csproj" /> -->
+    <!-- <PackageReference Include="QuickPulse" Version="0.1.3" /> -->
+    <ProjectReference Include="..\..\QuickPulse\QuickPulse\QuickPulse.csproj" />
   </ItemGroup>
 </Project>

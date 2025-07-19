@@ -32,11 +32,12 @@ public class LinesReaderTests
     }
 
     [Fact]
-    public void EndOfContent_ReturnsFalseBeforeEnd()
+    public void EndOfContent_Throws_Before_End()
     {
         var reader = LinesReader.FromText("a\r\nb");
         reader.NextLine();
-        Assert.False(reader.EndOfContent());
+        var ex = Assert.Throws<QuickPulse.Instruments.ComputerSaysNo>(() => reader.EndOfContent());
+        Assert.Equal("Not end of content: 'b'.", ex.Message);
     }
 
     [Fact]
@@ -69,7 +70,8 @@ public class LinesReaderTests
     {
         var reader = LinesReader.FromText("only");
         reader.NextLine();
-        Assert.Throws<InvalidOperationException>(reader.NextLine);
+        var ex = Assert.Throws<QuickPulse.Instruments.ComputerSaysNo>(reader.NextLine);
+        Assert.Equal("Attempted to read past the end of content.", ex.Message);
     }
 
     [Fact]
