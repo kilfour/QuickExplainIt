@@ -46,13 +46,48 @@ As I use aforementioned method off documenting stuff in all of my test projects,
 all of the various tools which are duplicated across multiple projects right now inside of this little box over here.
 
 ### LinesReader: Sequential Line Navigation
-`LinesReader` is a small utility used in tests to consume string content line-by-line.
+`LinesReader` is a lightweight utility intended for use in tests. It provides simple,
+sequential line-by-line reading over string content.
+
+**Creating a Reader**
+
+**- From text input (newline-separated):**
+```csharp
+var reader = LinesReader.FromText(aString);
+```
+
+**- From a list of strings:**
+```csharp
+var reader = LinesReader.FromStringList(new[] { "line1", "line2" });
+```
+
+**Basic usage:**
 ```csharp
 var reader = LinesReader.FromText(vcardString);
 Assert.Equal("BEGIN:VCARD", reader.NextLine());
 reader.Skip();
 Assert.True(reader.EndOfContent());
 ```
-Use `FromText(...)` for newline-separated text or `FromStringList(...)` for an array of lines. 
-It throws exceptions when reading past the end or using it uninitialized.
+
+**Error Handling:**
+
+LinesReader throws exceptions if:
+- You call `NextLine()` or `Skip()` past the end of the content.
+- You use the reader before it's initialized.
+- You call `EndOfContent()` when there are still lines to read.
+
+#### AsAssertsToLogFile
+`.AsAssertsToLogFile()` outputs the contents of the reader as xUnit `Assert.Equal(...)` statements,
+writing them to a log file using QuickPulse's default location:
+> `.quickpulse\quick-pulse-{unique}.log`.
+**Example:**
+```csharp
+LinesReader.FromStringList(["one", "two"]).AsAssertsToLogFile();
+```
+*Produces output like:*
+```csharp
+        Assert.Equal("one", reader.NextLine());
+        Assert.Equal("two", reader.NextLine());
+        Assert.True(reader.EndOfContent());
+```
 
