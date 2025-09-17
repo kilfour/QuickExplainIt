@@ -1,4 +1,4 @@
-# QuickExplainIt
+# QuickExplainIt  (Obsolete, use QuickPulse.Explains)
 `QuickExplainIt` is a lightweight documentation generator for C# projects,
 designed to turn `[Doc]`-annotated test classes and methods into clean, structured Markdown files.
 It leverages the `QuickPulse` library for declarative flow composition and supports
